@@ -3,40 +3,45 @@ import { LANGUAGE_CONFIG } from "@/app/(root)/_constants";
 import { create } from "zustand";
 import * as Monaco from "monaco-editor";
 
-const getInitialState = () => {
+const getInitialState = (): Omit<CodeEditorState, 'getCode' | 'setEditor' | 'setTheme' | 'setFontSize' | 'setLanguage' | 'runCode'> => {
     if (typeof window === "undefined") {
         return {
             language: "javascript",
             fontSize: 16,
             theme: "vs-dark",
+            output: "",
+            isRunning: false,
+            error: null,
+            editor: null,
+            executionResult: null,
         };
     }
 
     const savedLanguage = localStorage.getItem("editor-language") || "javascript";
     const savedTheme = localStorage.getItem("editor-theme") || "vs-dark";
-    const savedFontSize = localStorage.getItem("editor-font-size") || 16;
+    const savedFontSize = localStorage.getItem("editor-font-size") || "16";
 
     return {
         language: savedLanguage,
         theme: savedTheme,
         fontSize: Number(savedFontSize),
+        output: "",
+        isRunning: false,
+        error: null,
+        editor: null,
+        executionResult: null,
     };
 };
 
-export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
+export const useCodeEditorStore = create<CodeEditorState>()((set, get) => {
     const initialState = getInitialState();
 
     return {
         ...initialState,
-        output: "",
-        isRunning: false,
-        error: null,
-        editor: null as Monaco.editor.IStandaloneCodeEditor | null, // FIX: Proper typing
-        executionResult: null,
 
         getCode: () => get().editor?.getValue() || "",
 
-        setEditor: (editor: Monaco.editor.IStandaloneCodeEditor) => { // FIX: Correct type
+        setEditor: (editor: Monaco.editor.IStandaloneCodeEditor) => {
             const savedCode = localStorage.getItem(`editor-code-${get().language}`);
             if (savedCode) {
                 editor.setValue(savedCode);
@@ -90,7 +95,6 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
                 });
 
                 const data = await response.json();
-                console.log("data back from piston:", data);
 
                 if (data.message) {
                     set({ error: data.message, executionResult: { code, output: "", error: data.message } });
@@ -116,7 +120,10 @@ export const useCodeEditorStore = create<CodeEditorState>((set, get) => {
                 });
             } catch (error) {
                 console.error("Error running code:", error);
-                set({ error: "Error running code", executionResult: { code, output: "", error: "Error running code" } });
+                set({
+                    error: "Error running code",
+                    executionResult: { code, output: "", error: "Error running code" }
+                });
             } finally {
                 set({ isRunning: false });
             }
