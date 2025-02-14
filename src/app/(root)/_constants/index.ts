@@ -1,9 +1,8 @@
 import { Monaco } from "@monaco-editor/react";
-import { Theme } from "../../../types";
 
 export const THEME_DEFINITONS = {
     "github-dark": {
-        base: "vs-dark" as "vs-dark",  // Ensures correct type
+        base: "vs-dark",
         inherit: true,
         rules: [
             { token: "comment", foreground: "6e7681" },
@@ -27,7 +26,7 @@ export const THEME_DEFINITONS = {
         },
     },
     monokai: {
-        base: "vs-dark" as "vs-dark",
+        base: "vs-dark",
         inherit: true,
         rules: [
             { token: "comment", foreground: "75715E" },
@@ -51,7 +50,7 @@ export const THEME_DEFINITONS = {
         },
     },
     "solarized-dark": {
-        base: "vs-dark" as "vs-dark",
+        base: "vs-dark",
         inherit: true,
         rules: [
             { token: "comment", foreground: "586e75" },
@@ -74,18 +73,15 @@ export const THEME_DEFINITONS = {
             "editor.selectionHighlightBackground": "#073642",
         },
     },
-} as const; // Ensures TypeScript recognizes constant values
+} as const; // ✅ Ensures the entire object is immutable
 
 // Helper function to define themes in Monaco
 export const defineMonacoThemes = (monaco: Monaco) => {
     Object.entries(THEME_DEFINITONS).forEach(([themeName, themeData]) => {
         monaco.editor.defineTheme(themeName, {
-            base: themeData.base as "vs" | "vs-dark" | "hc-black", // Type assertion
+            base: themeData.base as "vs" | "vs-dark" | "hc-black", // ✅ Correct typing
             inherit: themeData.inherit,
-            rules: themeData.rules.map((rule) => ({
-                ...rule,
-                foreground: rule.foreground,
-            })),
+            rules: themeData.rules,
             colors: themeData.colors,
         });
     });
