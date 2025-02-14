@@ -12,7 +12,7 @@ import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
 import { debounce } from "lodash";
-import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import * as Monaco from 'monaco-editor';
 
 function EditorPanel() {
     const clerk = useClerk();
@@ -36,33 +36,18 @@ function EditorPanel() {
 
             const savedCode = localStorage.getItem(`editor-code-${language}`);
             const newCode = savedCode || LANGUAGE_CONFIG[language]?.defaultCode || '';
-            editor.getModel()?.setValue(newCode);
+            editor.setValue(newCode);
         } catch (error) {
             console.error('Error loading saved code:', error);
         }
     }, [language, editor, isEditorReady]);
-
-    // Load saved font size
-    useEffect(() => {
-        try {
-            const savedFontSize = localStorage.getItem("editor-font-size");
-            if (savedFontSize) {
-                const parsedSize = parseInt(savedFontSize);
-                if (!isNaN(parsedSize)) {
-                    setFontSize(parsedSize);
-                }
-            }
-        } catch (error) {
-            console.error('Error loading font size:', error);
-        }
-    }, [setFontSize]);
 
     const handleRefresh = useCallback(() => {
         try {
             if (!editor) return;
 
             const defaultCode = LANGUAGE_CONFIG[language]?.defaultCode || '';
-            editor.getModel()?.setValue(defaultCode);
+            editor.setValue(defaultCode);
             localStorage.removeItem(`editor-code-${language}`);
         } catch (error) {
             console.error('Error refreshing editor:', error);
@@ -97,7 +82,7 @@ function EditorPanel() {
         }
     }, [setFontSize]);
 
-    const handleEditorMount: OnMount = useCallback((editor: Monaco.IStandaloneCodeEditor) => {
+    const handleEditorMount: OnMount = useCallback((editor: Monaco.editor.IStandaloneCodeEditor) => {
         setEditor(editor);
         setIsEditorReady(true);
     }, [setEditor]);
