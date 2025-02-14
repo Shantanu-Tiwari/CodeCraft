@@ -47,7 +47,7 @@ export interface CodeEditorState {
     editor: Monaco | null;
     executionResult: ExecutionResult | null;
 
-    setEditor: (editor: Monaco) => void;
+    setEditor: (editor: editor.IStandaloneCodeEditor) => void;
     getCode: () => string;
     setLanguage: (language: string) => void;
     setTheme: (theme: string) => void;
