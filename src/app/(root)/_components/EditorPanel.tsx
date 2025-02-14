@@ -11,7 +11,7 @@ import { useClerk } from "@clerk/nextjs";
 import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
-import debounce from 'lodash/debounce';
+import { debounce } from "lodash";
 
 function EditorPanel() {
     const clerk = useClerk();
