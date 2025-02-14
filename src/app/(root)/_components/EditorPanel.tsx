@@ -14,6 +14,9 @@ import ShareSnippetDialog from "./ShareSnippetDialog";
 import { debounce } from "lodash";
 import * as Monaco from 'monaco-editor';
 
+// Type for the editor instance
+type MonacoEditor = Monaco.editor.IStandaloneCodeEditor;
+
 function EditorPanel() {
     const clerk = useClerk();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
@@ -31,9 +34,9 @@ function EditorPanel() {
 
     // Load saved code when language changes
     useEffect(() => {
-        try {
-            if (!editor || !isEditorReady) return;
+        if (!editor || !isEditorReady) return;
 
+        try {
             const savedCode = localStorage.getItem(`editor-code-${language}`);
             const newCode = savedCode || LANGUAGE_CONFIG[language]?.defaultCode || '';
             editor.setValue(newCode);
@@ -43,9 +46,9 @@ function EditorPanel() {
     }, [language, editor, isEditorReady]);
 
     const handleRefresh = useCallback(() => {
-        try {
-            if (!editor) return;
+        if (!editor) return;
 
+        try {
             const defaultCode = LANGUAGE_CONFIG[language]?.defaultCode || '';
             editor.setValue(defaultCode);
             localStorage.removeItem(`editor-code-${language}`);
@@ -82,7 +85,7 @@ function EditorPanel() {
         }
     }, [setFontSize]);
 
-    const handleEditorMount: OnMount = useCallback((editor: Monaco.editor.IStandaloneCodeEditor) => {
+    const handleEditorMount: OnMount = useCallback((editor: MonacoEditor) => {
         setEditor(editor);
         setIsEditorReady(true);
     }, [setEditor]);
