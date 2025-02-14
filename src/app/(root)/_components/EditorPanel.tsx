@@ -1,8 +1,9 @@
 "use client";
+
 import { useCodeEditorStore } from "@/store/useCodeEditorStore";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { defineMonacoThemes, LANGUAGE_CONFIG } from "../_constants";
-import { Editor } from "@monaco-editor/react";
+import { Editor, type Monaco, OnMount } from "@monaco-editor/react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { RotateCcwIcon, ShareIcon, TypeIcon } from "lucide-react";
@@ -10,40 +11,102 @@ import { useClerk } from "@clerk/nextjs";
 import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
+import debounce from 'lodash/debounce';
 
 function EditorPanel() {
     const clerk = useClerk();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-    const { language, theme, fontSize, editor, setFontSize, setEditor } = useCodeEditorStore();
+    const [isEditorReady, setIsEditorReady] = useState(false);
+    const {
+        language,
+        theme,
+        fontSize,
+        editor,
+        setFontSize,
+        setEditor
+    } = useCodeEditorStore();
 
     const mounted = useMounted();
 
+    // Load saved code when language changes
     useEffect(() => {
-        const savedCode = localStorage.getItem(`editor-code-${language}`);
-        const newCode = savedCode || LANGUAGE_CONFIG[language].defaultCode;
-        if (editor) editor.setValue(newCode);
-    }, [language, editor]);
+        try {
+            if (!editor || !isEditorReady) return;
 
+            const savedCode = localStorage.getItem(`editor-code-${language}`);
+            const newCode = savedCode || LANGUAGE_CONFIG[language]?.defaultCode || '';
+            editor.setValue(newCode);
+        } catch (error) {
+            console.error('Error loading saved code:', error);
+        }
+    }, [language, editor, isEditorReady]);
+
+    // Load saved font size
     useEffect(() => {
-        const savedFontSize = localStorage.getItem("editor-font-size");
-        if (savedFontSize) setFontSize(parseInt(savedFontSize));
+        try {
+            const savedFontSize = localStorage.getItem("editor-font-size");
+            if (savedFontSize) {
+                const parsedSize = parseInt(savedFontSize);
+                if (!isNaN(parsedSize)) {
+                    setFontSize(parsedSize);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading font size:', error);
+        }
     }, [setFontSize]);
 
-    const handleRefresh = () => {
-        const defaultCode = LANGUAGE_CONFIG[language].defaultCode;
-        if (editor) editor.setValue(defaultCode);
-        localStorage.removeItem(`editor-code-${language}`);
-    };
+    const handleRefresh = useCallback(() => {
+        try {
+            if (!editor) return;
 
-    const handleEditorChange = (value: string | undefined) => {
-        if (value) localStorage.setItem(`editor-code-${language}`, value);
-    };
+            const defaultCode = LANGUAGE_CONFIG[language]?.defaultCode || '';
+            editor.setValue(defaultCode);
+            localStorage.removeItem(`editor-code-${language}`);
+        } catch (error) {
+            console.error('Error refreshing editor:', error);
+        }
+    }, [editor, language]);
 
-    const handleFontSizeChange = (newSize: number) => {
-        const size = Math.min(Math.max(newSize, 12), 24);
-        setFontSize(size);
-        localStorage.setItem("editor-font-size", size.toString());
-    };
+    // Debounced save function
+    const debouncedSave = useCallback(
+        debounce((value: string) => {
+            try {
+                localStorage.setItem(`editor-code-${language}`, value);
+            } catch (error) {
+                console.error('Error saving code:', error);
+            }
+        }, 1000),
+        [language]
+    );
+
+    const handleEditorChange = useCallback((value: string | undefined) => {
+        if (value) {
+            debouncedSave(value);
+        }
+    }, [debouncedSave]);
+
+    const handleFontSizeChange = useCallback((newSize: number) => {
+        try {
+            const size = Math.min(Math.max(newSize, 12), 24);
+            setFontSize(size);
+            localStorage.setItem("editor-font-size", size.toString());
+        } catch (error) {
+            console.error('Error changing font size:', error);
+        }
+    }, [setFontSize]);
+
+    const handleEditorMount: OnMount = useCallback((editor, monaco) => {
+        setEditor(editor);
+        setIsEditorReady(true);
+    }, [setEditor]);
+
+    // Cleanup debounced save on unmount
+    useEffect(() => {
+        return () => {
+            debouncedSave.cancel();
+        };
+    }, [debouncedSave]);
 
     if (!mounted) return null;
 
@@ -54,7 +117,12 @@ function EditorPanel() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#1e1e2e] ring-1 ring-white/5">
-                            <Image src={"/" + language + ".png"} alt="Logo" width={24} height={24} />
+                            <Image
+                                src={`/${language}.png`}
+                                alt={`${language} logo`}
+                                width={24}
+                                height={24}
+                            />
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-white">Code Editor</h2>
@@ -75,8 +143,8 @@ function EditorPanel() {
                                     className="w-20 h-1 bg-gray-600 rounded-lg cursor-pointer"
                                 />
                                 <span className="text-sm font-medium text-gray-400 min-w-[2rem] text-center">
-                  {fontSize}
-                </span>
+                                    {fontSize}
+                                </span>
                             </div>
                         </div>
 
@@ -96,24 +164,24 @@ function EditorPanel() {
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setIsShareDialogOpen(true)}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg overflow-hidden bg-gradient-to-r
-               from-blue-500 to-blue-600 opacity-90 hover:opacity-100 transition-opacity"
+                                from-blue-500 to-blue-600 opacity-90 hover:opacity-100 transition-opacity"
                         >
                             <ShareIcon className="size-4 text-white" />
-                            <span className="text-sm font-medium text-white ">Share</span>
+                            <span className="text-sm font-medium text-white">Share</span>
                         </motion.button>
                     </div>
                 </div>
 
-                {/* Editor  */}
+                {/* Editor */}
                 <div className="relative group rounded-xl overflow-hidden ring-1 ring-white/[0.05]">
                     {clerk.loaded && (
                         <Editor
                             height="600px"
-                            language={LANGUAGE_CONFIG[language].monacoLanguage}
+                            language={LANGUAGE_CONFIG[language]?.monacoLanguage}
                             onChange={handleEditorChange}
                             theme={theme}
                             beforeMount={defineMonacoThemes}
-                            onMount={(editor) => setEditor(editor)}
+                            onMount={handleEditorMount}
                             options={{
                                 minimap: { enabled: false },
                                 fontSize,
@@ -145,4 +213,5 @@ function EditorPanel() {
         </div>
     );
 }
+
 export default EditorPanel;
