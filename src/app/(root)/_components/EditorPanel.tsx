@@ -12,6 +12,7 @@ import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
 import { debounce } from "lodash";
+import type * as Monaco from 'monaco-editor/esm/vs/editor/editor.api';
 
 function EditorPanel() {
     const clerk = useClerk();
@@ -35,7 +36,7 @@ function EditorPanel() {
 
             const savedCode = localStorage.getItem(`editor-code-${language}`);
             const newCode = savedCode || LANGUAGE_CONFIG[language]?.defaultCode || '';
-            editor.setValue(newCode);
+            editor.getModel()?.setValue(newCode);
         } catch (error) {
             console.error('Error loading saved code:', error);
         }
@@ -61,7 +62,7 @@ function EditorPanel() {
             if (!editor) return;
 
             const defaultCode = LANGUAGE_CONFIG[language]?.defaultCode || '';
-            editor.setValue(defaultCode);
+            editor.getModel()?.setValue(defaultCode);
             localStorage.removeItem(`editor-code-${language}`);
         } catch (error) {
             console.error('Error refreshing editor:', error);
@@ -96,7 +97,7 @@ function EditorPanel() {
         }
     }, [setFontSize]);
 
-    const handleEditorMount: OnMount = useCallback((editor) => {
+    const handleEditorMount: OnMount = useCallback((editor: Monaco.IStandaloneCodeEditor) => {
         setEditor(editor);
         setIsEditorReady(true);
     }, [setEditor]);
