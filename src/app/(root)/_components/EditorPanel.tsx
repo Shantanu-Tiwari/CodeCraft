@@ -96,7 +96,7 @@ function EditorPanel() {
         }
     }, [setFontSize]);
 
-    const handleEditorMount: OnMount = useCallback((editor, monaco) => {
+    const handleEditorMount: OnMount = useCallback((editor) => {
         setEditor(editor);
         setIsEditorReady(true);
     }, [setEditor]);
