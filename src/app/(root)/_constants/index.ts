@@ -86,8 +86,41 @@ export const defineMonacoThemes = (monaco: Monaco) => {
         });
     });
 };
+
 export const LANGUAGE_CONFIG = {
-    javascript: { name: "JavaScript", extension: ".js" },
-    python: { name: "Python", extension: ".py" },
-    typescript: { name: "TypeScript", extension: ".ts" },
+    javascript: {
+        name: "JavaScript",
+        extension: ".js",
+        monacoLanguage: "javascript",
+        defaultCode: `// JavaScript example
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+
+// Example usage
+console.log(greet("World"));`
+    },
+    python: {
+        name: "Python",
+        extension: ".py",
+        monacoLanguage: "python",
+        defaultCode: `# Python example
+def greet(name):
+    return f"Hello, {name}!"
+
+# Example usage
+print(greet("World"))`
+    },
+    typescript: {
+        name: "TypeScript",
+        extension: ".ts",
+        monacoLanguage: "typescript",
+        defaultCode: `// TypeScript example
+function greet(name: string): string {
+  return \`Hello, \${name}!\`;
+}
+
+// Example usage
+console.log(greet("World"));`
+    },
 };

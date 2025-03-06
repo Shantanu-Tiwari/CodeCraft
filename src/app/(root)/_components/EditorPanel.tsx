@@ -12,8 +12,19 @@ import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
 
+// Update the interface for language configuration to include defaultCode and monacoLanguage
+interface LanguageConfigItem {
+    name: string;
+    extension: string;
+    defaultCode: string;
+    monacoLanguage: string;
+}
+
 // Define the supported language types based on LANGUAGE_CONFIG keys
 type SupportedLanguage = keyof typeof LANGUAGE_CONFIG;
+
+// Type assertion for LANGUAGE_CONFIG
+const typedLanguageConfig = LANGUAGE_CONFIG as Record<SupportedLanguage, LanguageConfigItem>;
 
 function EditorPanel() {
     const clerk = useClerk();
@@ -27,7 +38,7 @@ function EditorPanel() {
 
     useEffect(() => {
         const savedCode = localStorage.getItem(`editor-code-${safeLanguage}`);
-        const newCode = savedCode || LANGUAGE_CONFIG[safeLanguage].defaultCode;
+        const newCode = savedCode || typedLanguageConfig[safeLanguage].defaultCode;
         if (editor) {
             editor.getModel()?.setValue(newCode);
         }
@@ -39,7 +50,7 @@ function EditorPanel() {
     }, [setFontSize]);
 
     const handleRefresh = () => {
-        const defaultCode = LANGUAGE_CONFIG[safeLanguage].defaultCode;
+        const defaultCode = typedLanguageConfig[safeLanguage].defaultCode;
         if (editor) {
             editor.getModel()?.setValue(defaultCode);
         }
@@ -123,7 +134,7 @@ function EditorPanel() {
                     {clerk.loaded && (
                         <Editor
                             height="600px"
-                            language={LANGUAGE_CONFIG[safeLanguage].monacoLanguage}
+                            language={typedLanguageConfig[safeLanguage].monacoLanguage}
                             onChange={handleEditorChange}
                             theme={theme}
                             beforeMount={defineMonacoThemes}
