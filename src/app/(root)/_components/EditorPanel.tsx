@@ -1,9 +1,8 @@
 "use client";
 import { useCodeEditorStore } from "@/store/useCodeEditorStore";
 import { useEffect, useState } from "react";
-import { defineMonacoThemes} from "../_constants";
-import { LANGUAGE_CONFIG} from "@/app/(root)/_constants";
-import { Editor, type OnMount } from "@monaco-editor/react";
+import { defineMonacoThemes, LANGUAGE_CONFIG } from "../_constants";
+import { Editor } from "@monaco-editor/react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { RotateCcwIcon, ShareIcon, TypeIcon } from "lucide-react";
@@ -12,37 +11,18 @@ import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
 
-// Update the interface for language configuration to include defaultCode and monacoLanguage
-interface LanguageConfigItem {
-    name: string;
-    extension: string;
-    defaultCode: string;
-    monacoLanguage: string;
-}
-
-// Define the supported language types based on LANGUAGE_CONFIG keys
-type SupportedLanguage = keyof typeof LANGUAGE_CONFIG;
-
-// Type assertion for LANGUAGE_CONFIG
-const typedLanguageConfig = LANGUAGE_CONFIG as Record<SupportedLanguage, LanguageConfigItem>;
-
 function EditorPanel() {
     const clerk = useClerk();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const { language, theme, fontSize, editor, setFontSize, setEditor } = useCodeEditorStore();
 
-    // Ensure language is treated as a SupportedLanguage
-    const safeLanguage = language as SupportedLanguage;
-
     const mounted = useMounted();
 
     useEffect(() => {
-        const savedCode = localStorage.getItem(`editor-code-${safeLanguage}`);
-        const newCode = savedCode || typedLanguageConfig[safeLanguage].defaultCode;
-        if (editor) {
-            editor.getModel()?.setValue(newCode);
-        }
-    }, [safeLanguage, editor]);
+        const savedCode = localStorage.getItem(`editor-code-${language}`);
+        const newCode = savedCode || LANGUAGE_CONFIG[language].defaultCode;
+        if (editor) editor.setValue(newCode);
+    }, [language, editor]);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem("editor-font-size");
@@ -50,25 +30,19 @@ function EditorPanel() {
     }, [setFontSize]);
 
     const handleRefresh = () => {
-        const defaultCode = typedLanguageConfig[safeLanguage].defaultCode;
-        if (editor) {
-            editor.getModel()?.setValue(defaultCode);
-        }
-        localStorage.removeItem(`editor-code-${safeLanguage}`);
+        const defaultCode = LANGUAGE_CONFIG[language].defaultCode;
+        if (editor) editor.setValue(defaultCode);
+        localStorage.removeItem(`editor-code-${language}`);
     };
 
     const handleEditorChange = (value: string | undefined) => {
-        if (value) localStorage.setItem(`editor-code-${safeLanguage}`, value);
+        if (value) localStorage.setItem(`editor-code-${language}`, value);
     };
 
     const handleFontSizeChange = (newSize: number) => {
         const size = Math.min(Math.max(newSize, 12), 24);
         setFontSize(size);
         localStorage.setItem("editor-font-size", size.toString());
-    };
-
-    const handleEditorMount: OnMount = (editor) => {
-        setEditor(editor);
     };
 
     if (!mounted) return null;
@@ -80,7 +54,7 @@ function EditorPanel() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#1e1e2e] ring-1 ring-white/5">
-                            <Image src={"/" + safeLanguage + ".png"} alt="Logo" width={24} height={24} />
+                            <Image src={"/" + language + ".png"} alt="Logo" width={24} height={24} />
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-white">Code Editor</h2>
@@ -101,8 +75,8 @@ function EditorPanel() {
                                     className="w-20 h-1 bg-gray-600 rounded-lg cursor-pointer"
                                 />
                                 <span className="text-sm font-medium text-gray-400 min-w-[2rem] text-center">
-                                    {fontSize}
-                                </span>
+                  {fontSize}
+                </span>
                             </div>
                         </div>
 
@@ -121,10 +95,11 @@ function EditorPanel() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setIsShareDialogOpen(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-blue-600 opacity-90 hover:opacity-100 transition-opacity"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg overflow-hidden bg-gradient-to-r
+               from-blue-500 to-blue-600 opacity-90 hover:opacity-100 transition-opacity"
                         >
                             <ShareIcon className="size-4 text-white" />
-                            <span className="text-sm font-medium text-white">Share</span>
+                            <span className="text-sm font-medium text-white ">Share</span>
                         </motion.button>
                     </div>
                 </div>
@@ -134,11 +109,11 @@ function EditorPanel() {
                     {clerk.loaded && (
                         <Editor
                             height="600px"
-                            language={typedLanguageConfig[safeLanguage].monacoLanguage}
+                            language={LANGUAGE_CONFIG[language].monacoLanguage}
                             onChange={handleEditorChange}
                             theme={theme}
                             beforeMount={defineMonacoThemes}
-                            onMount={handleEditorMount}
+                            onMount={(editor) => setEditor(editor)}
                             options={{
                                 minimap: { enabled: false },
                                 fontSize,
@@ -170,5 +145,4 @@ function EditorPanel() {
         </div>
     );
 }
-
 export default EditorPanel;
