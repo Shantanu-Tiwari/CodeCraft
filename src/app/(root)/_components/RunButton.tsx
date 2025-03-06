@@ -16,15 +16,21 @@ function RunButton() {
         await runCode();
         const result = getExecutionResult();
 
-        if (user && result) {
+        if (!result) {
+            console.error("Execution result is undefined");
+            return;
+        }
+
+        if (user) {
             await saveExecution({
                 language,
-                code: result.code,
-                output: result.output || undefined,
-                error: result.error || undefined,
+                code: result.code || "",
+                output: result.output || "",
+                error: result.error || "",
             });
         }
     };
+
 
     return (
         <motion.button
