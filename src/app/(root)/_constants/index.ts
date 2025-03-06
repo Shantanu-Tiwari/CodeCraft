@@ -86,3 +86,8 @@ export const defineMonacoThemes = (monaco: Monaco) => {
         });
     });
 };
+export const LANGUAGE_CONFIG = {
+    javascript: { name: "JavaScript", extension: ".js" },
+    python: { name: "Python", extension: ".py" },
+    typescript: { name: "TypeScript", extension: ".ts" },
+};

@@ -1,7 +1,8 @@
 "use client";
 import { useCodeEditorStore } from "@/store/useCodeEditorStore";
 import { useEffect, useState } from "react";
-import { defineMonacoThemes, LANGUAGE_CONFIG } from "../_constants";
+import { defineMonacoThemes} from "../_constants";
+import { LANGUAGE_CONFIG} from "@/app/(root)/_constants";
 import { Editor, type OnMount } from "@monaco-editor/react";
 import { motion } from "framer-motion";
 import Image from "next/image";
