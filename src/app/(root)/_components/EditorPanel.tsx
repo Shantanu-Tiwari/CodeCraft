@@ -12,20 +12,26 @@ import { EditorPanelSkeleton } from "./EditorPanelSkeleton";
 import useMounted from "@/hooks/useMounted";
 import ShareSnippetDialog from "./ShareSnippetDialog";
 
+// Define the supported language types based on LANGUAGE_CONFIG keys
+type SupportedLanguage = keyof typeof LANGUAGE_CONFIG;
+
 function EditorPanel() {
     const clerk = useClerk();
     const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
     const { language, theme, fontSize, editor, setFontSize, setEditor } = useCodeEditorStore();
 
+    // Ensure language is treated as a SupportedLanguage
+    const safeLanguage = language as SupportedLanguage;
+
     const mounted = useMounted();
 
     useEffect(() => {
-        const savedCode = localStorage.getItem(`editor-code-${language}`);
-        const newCode = savedCode || LANGUAGE_CONFIG[language].defaultCode;
+        const savedCode = localStorage.getItem(`editor-code-${safeLanguage}`);
+        const newCode = savedCode || LANGUAGE_CONFIG[safeLanguage].defaultCode;
         if (editor) {
             editor.getModel()?.setValue(newCode);
         }
-    }, [language, editor]);
+    }, [safeLanguage, editor]);
 
     useEffect(() => {
         const savedFontSize = localStorage.getItem("editor-font-size");
@@ -33,15 +39,15 @@ function EditorPanel() {
     }, [setFontSize]);
 
     const handleRefresh = () => {
-        const defaultCode = LANGUAGE_CONFIG[language].defaultCode;
+        const defaultCode = LANGUAGE_CONFIG[safeLanguage].defaultCode;
         if (editor) {
             editor.getModel()?.setValue(defaultCode);
         }
-        localStorage.removeItem(`editor-code-${language}`);
+        localStorage.removeItem(`editor-code-${safeLanguage}`);
     };
 
     const handleEditorChange = (value: string | undefined) => {
-        if (value) localStorage.setItem(`editor-code-${language}`, value);
+        if (value) localStorage.setItem(`editor-code-${safeLanguage}`, value);
     };
 
     const handleFontSizeChange = (newSize: number) => {
@@ -63,7 +69,7 @@ function EditorPanel() {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#1e1e2e] ring-1 ring-white/5">
-                            <Image src={"/" + language + ".png"} alt="Logo" width={24} height={24} />
+                            <Image src={"/" + safeLanguage + ".png"} alt="Logo" width={24} height={24} />
                         </div>
                         <div>
                             <h2 className="text-sm font-medium text-white">Code Editor</h2>
@@ -117,7 +123,7 @@ function EditorPanel() {
                     {clerk.loaded && (
                         <Editor
                             height="600px"
-                            language={LANGUAGE_CONFIG[language].monacoLanguage}
+                            language={LANGUAGE_CONFIG[safeLanguage].monacoLanguage}
                             onChange={handleEditorChange}
                             theme={theme}
                             beforeMount={defineMonacoThemes}
